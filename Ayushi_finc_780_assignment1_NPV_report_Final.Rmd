@@ -1,0 +1,92 @@
+---
+title: "Capital Budgeting Function - NPV, PI, Payback"
+output: html_document
+params: 
+        cf: ()
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# INTRODUCTION TO CAPITAL BUDGETING 
+
+To survive in a competitive marketplace, businesses need to have a holistic view of the future projections of investment opportunities including risks and returns. 
+Capital Budgeting or Investment Appraisal is a process involving calculation of certain metrics to choose the most profitable investment projects from a certain number of potential project opportunities. Investors are required to choose a project which will add value to the company.
+
+Some of the most commonly used approaches for project arraisal are : 
+Net Present Value (NPV) determining  remains analysts' favourite owing to its ingenuous approach to project valuation. NPV uses discounted after tax cash flows the weighted average cost of capital to provide insight into how profitable a project will be. 
+Payback period is used to determine the number of years in which a project will recover its original investment. A shorter payback period indicates to a better investment project 
+Profitability Index (PI) 
+Internal Rate of Return (IRR). 
+The choice of a approach is contingent on factors like management preference, selection criteria, firms liquidity etc. Even though these tools can sometimes present inconsistent outcomes, the ideal investment project will be one where all the metrics point towards the same decision. 
+
+The following function is developed to calculate 3 of these tools - NPV, Payback and PI. User can just call the function, enter required arguments for Cash Flows, Years and Rate of Interest and the program will output Tables for Years, Respective Cash Flows, respective Present Values and a summary table with NPV, PI and Payback Values
+
+```{r NPV}
+library(formattable)
+myNPV <- function(cf, t_yrs=NA , roi)
+{
+  # checking validity of inputs  
+  if (!is.numeric(cf) | !is.vector(cf))
+    {
+      return("Invalid Entry: Please enter numeric vectors for Cash Flows")
+    }
+    
+    # avoiding warnings for users by checking the length of t_yrs
+    if(length(t_yrs)==1){
+      if (is.na(t_yrs))
+      {
+        t_yrs <- 0:(length(cf)-1)
+      }
+    }
+    else if (!is.numeric(t_yrs) | !is.vector(t_yrs) | !length(t_yrs) == length(cf))
+    {
+      return ("Invalid Entry: Enter only non-negative, numeric vectors for time with length equal to the length of cf vector")
+    }
+    if (roi < 0 | !is.numeric(roi) | is.null(roi))
+    {
+      return("Invalid Entry 2")
+    }
+  pv <- NA
+  npv <- 0
+  pi <- NA
+  pb_period <- NA
+  for (i in 1:length(cf)) 
+  {
+    pv[i] <- cf[i]/((1+roi)^t_yrs[i])
+    npv = npv + pv[i]
+    if(npv >=0 & is.na(pb_period)){
+      pb_period<- t_yrs[i]
+    }
+  }
+  # formatting in currency
+  cf <- currency(cf, digits = 0L)
+  print(cf)
+  pv <- currency(pv, digits = 0L)
+  print(pv)
+  npv <- currency(npv, digits = 0L)
+  print(npv)
+  pi = 1 + (npv/abs(cf[1]))
+  df_pv <- data.frame(Years <- t_yrs, Cash_Flows <- cf, Present_Value <- pv)
+  df_proj_metrics <- data.frame(NPV <- npv, Profit_Index <- round(pi, digits = 2), Payback_Period <- pb_period)
+  
+  return(list(Present_Value_of_Cash_Flows = df_pv, Project_Metrics = df_proj_metrics))
+}
+```
+
+#TESTING CODE
+```{r}
+myNPV(c(-10, 2, 4, 5, 9, 6),, .12)
+myNPV(c(-10000, 4000, 9000, 2000), c(1,3,5,7), .12)
+```
+
+# LESSONS LEARNED
+Apart from the trial and error involved in validating inputs for the function and function creation itself, some new lessons learned were: 
+
+## Output Formatting
+The above program uses currency formatting packages. Many a times the program would generate errors. There was a lot of trial and error involved for formatting in currency.
+
+## R Markdown to create interactive documents
+My first code chunk was created to prompt the user for input but the knitR in RMarkdown being an uninteractive session was stopping at the first user prompt. R Markdown can be used to create interactive documents but it was beyond the scope of this assignment so the program was edited to suit the assignment requirements
+
